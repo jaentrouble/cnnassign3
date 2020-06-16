@@ -151,7 +151,11 @@ class CaptioningRNN(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        h_state = np.matmul(features, W_proj)
+        embedded_in = W_embed[captions_in]
+        hidden_input = np.matmul(embedded_in, Wx)
+
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
