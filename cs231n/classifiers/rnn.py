@@ -151,11 +151,18 @@ class CaptioningRNN(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        h_state = np.matmul(features, W_proj)
+        H, V = self.params['W_vocab'].shape
+        N, T = captions_in.shape
+        h_state = np.matmul(features, W_proj) + b_proj
         embedded_in = W_embed[captions_in]
-        hidden_input = np.matmul(embedded_in, Wx)
-
-
+        h_input = np.matmul(embedded_in, Wx)
+        h_total_state = np.zeros(N, T, H)
+        if self.cell_type == 'rnn':
+            for t, h_i in enumerate(h_input) :
+                h_state = np.tanh(np.matmul(Wh, h_state) + h_i + b)
+                h_total_state[:,t] = h_state
+        scores = temporal_affine_forward(h_total_state, W_vocab, b_vocab)
+        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
