@@ -36,7 +36,8 @@ def rnn_step_forward(x, prev_h, Wx, Wh, b):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    next_h = np.tanh(np.matmul(x, Wx) + np.matmul(prev_h, Wh) + b)
+    cache = (x, prev_h, next_h, Wx, Wh)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
@@ -69,7 +70,13 @@ def rnn_step_backward(dnext_h, cache):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, prev_h, next_h, Wx, Wh = cache
+    dtanh = (1 - next_h**2)*dnext_h
+    dx = np.matmul(dtanh, Wx.T)
+    dWx = np.sum(np.matmul(x[:,:,np.newaxis], dtanh[:,np.newaxis,:]), axis=0)
+    dprev_h = np.matmul(dtanh, Wh.T)
+    dWh = np.sum(np.matmul(prev_h[:,:,np.newaxis], dtanh[:,np.newaxis,:]), axis=0)
+    db = np.sum(dtanh, axis=0)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
@@ -104,7 +111,13 @@ def rnn_forward(x, h0, Wx, Wh, b):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, T, D = x.shape
+    _, H = h0.shape
+    h = np.zeros((N, T, H))
+    h_temp = h0
+    for t in range(T) :
+        h_temp, step_cache = rnn_step_forward(x[:,t], h_temp, Wx, Wh, b)
+        h[:,t,:] = h_temp
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################

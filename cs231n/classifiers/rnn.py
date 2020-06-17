@@ -161,7 +161,15 @@ class CaptioningRNN(object):
             for t, h_i in enumerate(h_input) :
                 h_state = np.tanh(np.matmul(Wh, h_state) + h_i + b)
                 h_total_state[:,t] = h_state
-        scores = temporal_affine_forward(h_total_state, W_vocab, b_vocab)
+            scores, cache_aff = temporal_affine_forward(h_total_state, W_vocab, b_vocab)
+            loss, dx = temporal_softmax_loss(scores, captions_out, mask)
+            dh_total, grads['W_vocab'], grads['b_vocab'] = temporal_affine_backward(dx, cache_aff)
+            dh_from_state = np.zeros_like(h_state)
+            for t in range(N-1, -1, -1):
+                dh_from_out = dh_total[:, t]
+                dh_state = dh_from_out + dh_from_state
+                
+
         
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
