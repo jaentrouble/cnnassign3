@@ -288,7 +288,15 @@ def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, H = prev_h.shape
+    a = np.matmul(x, Wx) + np.matmul(prev_h, Wh) + b
+    i = sigmoid(a[:,:H])
+    f = sigmoid(a[:,H:2*H])
+    o = sigmoid(a[:,2*H:3*H])
+    g = np.tanh(a[:,3*H:])
+    next_c = f * prev_c + i * g
+    next_h = o * np.tanh(next_c)
+    cache = (x, Wx, prev_h, Wh, i, f, o, g, prev_c, next_c)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
@@ -324,7 +332,23 @@ def lstm_step_backward(dnext_h, dnext_c, cache):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, Wx, prev_h, Wh, i, f, o, g, prev_c, next_c = cache
+    do = dnext_h * np.tanh(next_c)
+    dnext_c += dnext_h * o * (1 - np.tanh(next_c)**2)
+    df = dnext_c * prev_c
+    dprev_c = dnext_c * f
+    di = dnext_c * g
+    dg = dnext_c * i
+    da_i = di * (i - i**2)
+    da_f = df * (f - f**2)
+    da_o = do * (o - o**2)
+    da_g = dg * (1 - g**2)
+    da = np.concatenate((da_i, da_f, da_o, da_g), axis=1)
+    dx = np.matmul(da, Wx.T)
+    dWx = np.sum(np.matmul(x[:,:,np.newaxis], da[:,np.newaxis,:]), axis=0)
+    dprev_h = np.matmul(da, Wh.T)
+    dWh = np.sum(np.matmul(prev_h[:,:,np.newaxis], da[:,np.newaxis,:]), axis=0)
+    db = np.sum(da, axis=0)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
