@@ -34,7 +34,12 @@ def compute_saliency_maps(X, y, model):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    scores = model(X)
+    loss = torch.nn.functional.cross_entropy(scores, y, reduction='sum')
+    loss.backward()
+    grads = X.grad
+    indices = grads.argmax(dim=1, keepdim=True)
+    saliency = grads.gather(1, indices).squeeze()
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
@@ -75,8 +80,18 @@ def make_fooling_image(X, target_y, model):
     # You can print your progress over iterations to check your algorithm.       #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
+    import tqdm
+    for _ in tqdm.trange(1000) :
+        score = model(X_fooling)
+        if score.argmax() == target_y :
+            break
+        loss = torch.nn.functional.cross_entropy(score, torch.tensor([target_y]))
+        loss.backward()
+        with torch.no_grad():
+            g = X_fooling.grad
+            X_fooling -= learning_rate * g / g.norm()
+            X_fooling.grad.zero_()
+    print('\nfinished')
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
@@ -94,7 +109,13 @@ def class_visualization_update_step(img, model, target_y, l2_reg, learning_rate)
     ########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    score = model(img)
+    loss = score[0,target_y] - l2_reg * img.norm()**2
+    loss.backward()
+    with torch.no_grad():
+        # We want to 'increase' loss
+        img += learning_rate * img.grad
+        img.grad.zero_()
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ########################################################################

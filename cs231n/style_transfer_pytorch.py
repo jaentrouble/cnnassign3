@@ -11,7 +11,7 @@ from .image_utils import SQUEEZENET_MEAN, SQUEEZENET_STD
 dtype = torch.FloatTensor
 # Uncomment out the following line if you're on a machine with a GPU set up for PyTorch!
 #dtype = torch.cuda.FloatTensor
-def content_loss(content_weight, content_current, content_original):
+def content_loss(content_weight, content_current, content_target):
     """
     Compute the content loss for style transfer.
 
@@ -26,7 +26,7 @@ def content_loss(content_weight, content_current, content_original):
     """
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    return content_weight * torch.sum((content_current - content_target)**2)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -46,7 +46,14 @@ def gram_matrix(features, normalize=True):
     """
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, C, H, W = features.shape
+    gram = torch.zeros((N,C,C))
+    for i in range(C):
+        for j in range(C):
+            gram[:,i,j] = torch.sum(features[:,i] * features[:,j], dim=(1, 2))
+    if normalize:
+        gram /= H*W*C
+    return gram
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -72,8 +79,10 @@ def style_loss(feats, style_layers, style_targets, style_weights):
     # Hint: you can do this with one for loop over the style layers, and should
     # not be very much code (~5 lines). You will need to use your gram_matrix function.
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
+    style_loss = torch.tensor(0.0)
+    for weight, idx, A in zip(style_weights, style_layers, style_targets):
+        style_loss += weight * torch.sum((gram_matrix(feats[idx])-A)**2)
+    return style_loss
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -92,7 +101,10 @@ def tv_loss(img, tv_weight):
     # Your implementation should be vectorized and not require any loops!
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    horizontal = torch.sum((img[:,:,:-1,:] - img[:,:,1:,:])**2)
+    vertical = torch.sum((img[:,:,:,:-1] - img[:,:,:,1:])**2)
+    loss = tv_weight * (horizontal + vertical)
+    return loss
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 def preprocess(img, size=512):
